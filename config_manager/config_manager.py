@@ -26,14 +26,17 @@ class ConfigManager(object):
     def save_config(self, config=None) -> None:
         if not config:
             config = self.config
-        # Capture Path object of Config, before save_config_filter that will strip Path Properties
-        # save_file = config["config_file"]
+        # if not config["config_dir"].exists():
+        #     config["config_dir"].mkdir()
+        if not config["config_file"].exists():
+            config["config_file"].touch()
+
         config["config_file"].write_text(dumps(self.save_config_filter(config)))
 
     def load_config(self, config=None) -> dict:
         if not config:
             config = self.config
-        return self.load_config_filter(self.load_config_filter(self.config["config_file"].read_text()))
+        return self.load_config_filter(self.config["config_file"].read_text())
 
     def save_config_filter(self, config: dict) -> dict:
         # We DO NOT USE self.config | We
@@ -56,5 +59,5 @@ class ConfigManager(object):
         return default_config()
 
 
-if __name__ == "__main__":
-    cfg_mgr = ConfigManager()
+# if __name__ == "__main__":
+#     cfg_mgr = ConfigManager()

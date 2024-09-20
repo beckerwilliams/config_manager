@@ -18,12 +18,21 @@ class TestConfigManager(TestCase):
     # Setup - Start Each Test with CLEAN Config Directory
     def setUp(self) -> None:
         self.tcm = ConfigManager()
+        self.test_conf = {
+            "config_dir": Path.home().joinpath("ConfigManagerTestDir"),
+            "config_file": Path.home().joinpath("cm_conf"),
+        }
 
     def tearDown(self) -> None:
         if self.tcm.config["config_file"].exists():
             self.tcm.config["config_file"].unlink()
         if self.tcm.config["config_dir"].exists():
             self.tcm.config["config_dir"].rmdir()
+
+        if self.tcm.config["config_dir"].exists():
+            self.tcm.config["config_dir"].rmdir()
+        if self.tcm.config["config_file"].exists():
+            self.tcm.config["config_file"].unlink()
         del self.tcm
 
     def test_init(self):
@@ -38,16 +47,19 @@ class TestConfigManager(TestCase):
     def test_config_file_exists(self):
         self.assertTrue(self.tcm.config["config_file"].exists())
 
-    def test_load_configuration(self):
+    def test_load_configuration_defaultconfig(self):
         self.assertDictEqual(
             self.tcm.load_config_filter(loads(self.tcm.config["config_file"].read_text())),
             default_config())
 
+    def test_load_configuration_testconfig(self):
+        cm = ConfigManager(config=self.test_conf)
+        self.assertDictEqual(
+            cm.load_config_filter(loads(cm.config["config_file"].read_text())),
+            self.test_conf)
+
     def test_save_configuration(self):
-        test_conf = {
-            "config_dir": Path.home().joinpath("ConfigManagerTestDir"),
-            "config_file": Path.home().joinpath("cm_conf"),
-        }
+        pass
 
 
 if __name__ == '__main__':
