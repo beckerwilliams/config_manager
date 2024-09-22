@@ -45,8 +45,23 @@ class ConfigManager(object):
 
     @classmethod
     def __init__(self, config: dict = None) -> None:
-        if config:
-            config = _enable_path_properties(config)
+        """
+        If no config provided, default is assigned as `self.config`
+        If a Configuration File corresponding to provided or default config exists,
+        it will take precedence over the provided configuration dict.
+
+        :param config: Application Configruation Directory and File
+        :type config: dict
+        """
+        if not config:
+            config = default_config()
+
+        config_file = Path.home().joinpath(config["config_dir"], config["config_file"])
+        if config_file.exists and config_file.is_file():
+            self.config = _enable_path_properties(loads(config_file.read_text()))
         else:
-            config = _enable_path_properties(default_config())
-        self.config = config  # Delete This Line when CoMPLETE BELOW tbd
+            self.config = _enable_path_properties(default_config())
+            if not Path.home().joinpath(config["config_dir"]).exists():
+                Path.home().joinpath(config["config_dir"]).mkdir(exist_ok=True)
+            Path.home().joinpath(config["config_dir"], config["config_file"]).write_text(dumps(config))
+
