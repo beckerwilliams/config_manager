@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "config_manager"
-version = "0.9.1"
+version = "0.9.2"
 description = "Manages Lifecycle of Application Configuration"
 authors = ["Ron Williams <becker.wiliams@gmail.com>"]
 readme = "README.md"
@@ -16,4 +16,10 @@ python = "^3.9"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/beckerwilliams/config_manager"
+Documentation = "https://github.com/beckerwilliams/config_manager/README.md"
+Repository = "https://github.com/beckerwilliams/config_manager.git"
+Issues = "https://github.com/beckerwilliams/config_manager/issues"
 
