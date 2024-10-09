@@ -1,8 +1,12 @@
-from json import loads
+from json import (loads)
 from pathlib import PosixPath as Path
-from unittest import TestCase
+from unittest import TestCase, mock
 
-from config_manager.config_manager import ConfigManager, default_config
+from config_manager import default_config
+from config_manager import ConfigManager
+
+
+# from nose.tools import *
 
 
 # noinspection PyTypeChecker
@@ -11,8 +15,9 @@ class TestConfigManager(TestCase):
     # Setup - Start Each Test with CLEAN Config Directory
     @classmethod
     def setUp(cls) -> None:
+        # Default Config Manager
         cls.defaultCM = ConfigManager()
-
+        # User Directory
         cls.user_conf = {"config_dir": "ConfigManagerTestDir", "config_file": "cm_conf",
                          "application_property_0": "application_value_0",
                          "application_property_1": "application_value_1",
@@ -21,20 +26,12 @@ class TestConfigManager(TestCase):
 
     @classmethod
     def tearDown(cls) -> None:
-        for test_config in [default_config(), cls.user_conf]:
-            if Path.home().joinpath(test_config["config_dir"], test_config["config_file"]).exists():
-                Path.home().joinpath(test_config["config_dir"], test_config["config_file"]).unlink()
-                Path.home().joinpath(test_config["config_dir"]).rmdir()
-
-    #
-    @classmethod
-    def test__init__(cls) -> None:
-        # cls.assertIsInstance(cls, cls.defaultCM, ConfigManager)
-        cls.assertIsInstance(cls, cls.userCM, ConfigManager)
+        del cls.defaultCM
+        del cls.userCM
 
     @classmethod  #
-    def test_config_type(cls) -> None:
-        # cls.assertIsInstance(cls, cls.defaultCM.config, dict)
+    def test___init__(cls) -> None:
+        cls.assertIsInstance(cls, cls.userCM, ConfigManager)
         cls.assertIsInstance(cls, cls.userCM.config, dict)
 
     @classmethod  #
@@ -44,21 +41,27 @@ class TestConfigManager(TestCase):
         cls.assertIn(cls, 'config_dir', cls.userCM.config)
         cls.assertIn(cls, 'config_file', cls.userCM.config)
 
-    #
-    # @classmethod  #
+    @classmethod
     def test_config_required_values_not_none(cls) -> None:
-        cls.assertIsNotNone(cls.defaultCM.config['config_dir'])
-        cls.assertIsNotNone(cls.defaultCM.config['config_file'])
-        cls.assertIsNotNone(cls.userCM.config['config_dir'])
-        cls.assertIsNotNone(cls.userCM.config['config_file'])
+        cls.assertIsNotNone(cls, cls.defaultCM.config['config_dir'])
+        cls.assertIsNotNone(cls, cls.defaultCM.config['config_file'])
+        cls.assertIsNotNone(cls, cls.userCM.config['config_dir'])
+        cls.assertIsNotNone(cls, cls.userCM.config['config_file'])
 
+    @classmethod
     def test_config_file_creation(cls) -> None:
-        cls.assertTrue(cls.defaultCM.config['config_file'].exists())
-        cls.assertTrue(cls.userCM.config['config_file'].exists())
+        cls.assertGreaterEqual(cls, cls.defaultCM.config['config_file'].stat().st_size, 8)
+        cls.assertTrue(cls, cls.userCM.config['config_file'].exists())
 
         for conf_file in [cls.userCM.config['config_file'], cls.defaultCM.config['config_file']]:
-            userConfig = loads(conf_file.read_text())
-            cls.assertIn('config_dir', userConfig)
-            cls.assertIn('config_file', userConfig)
-            cls.assertIsInstance(userConfig['config_dir'], str)
-            cls.assertIsInstance(userConfig['config_file'], str)
+            user_config = loads(conf_file.read_text())
+            cls.assertIn(cls, 'config_dir', user_config)
+            cls.assertIn(cls, 'config_file', user_config)
+            cls.assertIsInstance(cls, user_config['config_dir'], str)
+            cls.assertIsInstance(cls, user_config['config_file'], str)
+
+    @classmethod
+    def test_print_config(cls):
+        with mock.patch('sys.stdout') as fake_stdout:
+            cls.defaultCM.print_config()
+            fake_stdout.assert_has_calls([mock.call.write(str(cls.defaultCM.config))])
