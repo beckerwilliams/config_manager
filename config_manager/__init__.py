@@ -32,34 +32,6 @@ def _path_parameters() -> list:
     return [entry[0] for entry in [entry for entry in _default_pre_config]]
 
 
-def _fs_delete(directory: Path) -> Path:
-    # protected_paths = [
-    #     Path.home(),
-    #     Path('/'),
-    #     Path('/etc'),
-    #     Path('/usr'),
-    #     Path('/usr/local'),
-    #     Path('/usr/local/etc'),
-    #     Path('/opt'),
-    #     Path('/var'),
-    #     Path('/var/local')
-    # ]
-    # if directory in protected_paths:
-    #     raise FileExistsError(f'Innappropriate Directory Path: {directory}')
-
-    if directory.exists():
-        for file in directory.iterdir():
-            if file.is_dir():
-                _fs_delete(file)
-                file.rmdir()
-            else:
-                file.unlink()
-        # Finally remove root.config
-        directory.rmdir()
-    # else:
-    #     raise FileNotFoundError(f'Directory {directory} does not exist')
-
-
 def _enable_path_properties(config: dict, root_dir=None) -> dict:
     if not root_dir:
         root_dir = Path.home()
@@ -103,56 +75,53 @@ def _disable_path_properties(config: dict) -> dict:
     return new_config
 
 
+def _fs_delete(directory: Path = None) -> Path:
+    if directory.exists():
+        for file in directory.iterdir():
+            if file.is_dir():
+                _fs_delete(file)
+                file.rmdir()
+            else:
+                file.unlink()
+        directory.rmdir()
+    else:
+        print(f'Directory {directory} does not exist')
+
+
 class ConfigManager(object):
 
     @classmethod
     def __init__(cls, config: dict = None, root_dir: Path = None) -> None:
 
         if not config:
-            conf = default_config()
+            cls.config = default_config()
         else:
-            conf = config
+            cls.config = config
 
         if not root_dir:
             # Handle Case where root_dir is String, doesn't matter for Path objects (redundant)
             root_dir = Path.home()
         else:
-            root_dir = Path(root_dir)
+            root_dir = root_dir
 
-        """
-        If no config provided, default is created and assigned as `cls.config`
+        # Use On Disk Config - If it exists, Otherwise use DEFAULT Config
+        cls.config['config_dir'] = root_dir.joinpath(cls.config['config_dir'])
+        if not cls.config['config_dir'].exists():
+            cls.config['config_dir'].mkdir(parents=True, exist_ok=True)
 
-        If a Configuration File corresponding to a config  that exists,
-        it will take precedence over the provided configuration dict.
+        config_file = cls.config['config_dir'].joinpath(cls.config["config_file"])
 
-        :param config: Application Configuration Directory and File
-        :type config: dict
-        """
-        # Load Existing '.config' IF It Exists
-        # Always defers to ON DISK Configuration
-
-        config_file = root_dir.joinpath(conf["config_dir"], conf["config_file"])
-
-        if config_file.exists and config_file.is_file():
-            pre_config = loads(config_file.read_text())
-            conf = _enable_path_properties(pre_config)
+        # Read Configuration File, Continue
+        if config_file.exists() and config_file.is_file():
+            cls.config = _enable_path_properties(loads(config_file.read_text()))
         else:
-            conf = _enable_path_properties(conf)
-
-        if not conf["config_dir"].exists():
-            root_dir.joinpath(conf["config_dir"]).mkdir(exist_ok=True)
-
-        # Save Configuration File
-        disabled = dumps(_disable_path_properties(conf))
-        config_file.write_text(disabled)
-
-        cls.config = conf
+            cls.config = _enable_path_properties(cls.config)
+            config_file.write_text(dumps(_disable_path_properties(cls.config)))
 
     @classmethod
     def __del__(cls) -> None:
         _fs_delete(cls.config['config_dir'])
 
-        # Classic Recursive Deletion of a Hierarchy
-
-    def print_config(cls, path=None):
+    @classmethod
+    def print_config(cls):
         print(f'{cls.config}')
