@@ -78,13 +78,18 @@ def _disable_path_properties(config: dict) -> dict:
 def _fs_delete(directory: Path = None) -> Path:
     if directory.exists():
         for file in directory.iterdir():
-            if file.is_dir():
-                _fs_delete(file)
-                file.rmdir()
-            else:
-                file.unlink()
+
+            if file.exists():
+                if file.is_dir():
+                    _fs_delete(file)
+                    file.rmdir()
+                else:
+                    file.unlink()
+
         directory.rmdir()
+
     else:
+
         print(f'Directory {directory} does not exist')
 
 
