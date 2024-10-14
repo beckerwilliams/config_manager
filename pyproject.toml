@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "config_manager"
-version = "0.9.2"
+name = "config-manager"
+version = "0.9.15"
 description = "Manage Application Configuration"
 authors = ["Ron Williams <becker.wiliams@gmail.com>"]
 readme = "README.md"

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from json import (dumps, loads)
 from pathlib import PosixPath as Path
 
@@ -76,17 +75,18 @@ def _disable_path_properties(config: dict) -> dict:
 
 
 def _fs_delete(directory: Path = None) -> Path:
-    if directory.exists():
-        for file in directory.iterdir():
-            if file.exists():
-                if file.is_dir():
-                    _fs_delete(file)
-                    file.rmdir()
-                else:
-                    file.unlink()
+    for fobject in directory.iterdir():
+        if fobject.is_dir():
+            _fs_delete(fobject)
+            fobject.rmdir()
+        else:
+            fobject.unlink()
+
+
+def fs_delete(directory: Path = None) -> None:
+    _fs_delete(directory)
+    if directory.is_dir():
         directory.rmdir()
-    else:
-        print(f'Directory {directory} does not exist')
 
 
 class ConfigManager(object):
@@ -115,7 +115,8 @@ class ConfigManager(object):
 
     @classmethod
     def __del__(cls) -> None:
-        _fs_delete(cls.config['config_dir'])
+        if cls.config['config_dir'].exists():
+            fs_delete(cls.config['config_dir'])
 
     @classmethod
     def print_config(cls):
