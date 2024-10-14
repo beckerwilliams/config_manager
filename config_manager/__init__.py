@@ -78,18 +78,14 @@ def _disable_path_properties(config: dict) -> dict:
 def _fs_delete(directory: Path = None) -> Path:
     if directory.exists():
         for file in directory.iterdir():
-
             if file.exists():
                 if file.is_dir():
                     _fs_delete(file)
                     file.rmdir()
                 else:
                     file.unlink()
-
         directory.rmdir()
-
     else:
-
         print(f'Directory {directory} does not exist')
 
 
@@ -98,29 +94,23 @@ class ConfigManager(object):
     @classmethod
     def __init__(cls, config: dict = None, root_dir: Path = None) -> None:
 
-        if not config:
-            cls.config = default_config()
-        else:
-            cls.config = config
-
         if not root_dir:
-            # Handle Case where root_dir is String, doesn't matter for Path objects (redundant)
             root_dir = Path.home()
-        else:
-            root_dir = root_dir
 
-        # Use On Disk Config - If it exists, Otherwise use DEFAULT Config
-        cls.config['config_dir'] = root_dir.joinpath(cls.config['config_dir'])
-        if not cls.config['config_dir'].exists():
-            cls.config['config_dir'].mkdir(parents=True, exist_ok=True)
+        if not config:
+            config = default_config()
 
-        config_file = cls.config['config_dir'].joinpath(cls.config["config_file"])
+        config['config_dir'] = root_dir.joinpath(config['config_dir'])
+        if not config['config_dir'].exists():
+            config['config_dir'].mkdir(parents=True, exist_ok=True)
+
+        config_file = config['config_dir'].joinpath(config["config_file"])
 
         # Read Configuration File, Continue
-        if config_file.exists() and config_file.is_file():
+        if config_file.exists() and config_file.is_file() and config_file.stat().st_size > 0:
             cls.config = _enable_path_properties(loads(config_file.read_text()))
-        else:
-            cls.config = _enable_path_properties(cls.config)
+        else:  # Save Current Config
+            cls.config = _enable_path_properties(config)
             config_file.write_text(dumps(_disable_path_properties(cls.config)))
 
     @classmethod
